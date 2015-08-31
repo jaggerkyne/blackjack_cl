@@ -14,66 +14,149 @@
 
 # win: whoever gets 21 wins, when winner appears, display the winner.
 
-# It must have some other way to represent the cards in the deck, likes times two arrays together
 
-# card_types = ["Spades", "Hearts", "Diamonds","Clubs"]
-
-# suits = ["Jack", "Queen", "King"] # value at 10
-
-# singles = ["2","3","4","5","6","7","8","9","10"]
-
-# aces = ["Ace"] # value at 11 or 1 when conditions meets
-
-suits = {
-  "Jack Spades" => 10, "Jack Hearts" => 10, "Jack Diamonds" => 10, "Jack Clubs" => 10,
-  "Queen Spades" => 10, "Queen Hearts" => 10, "Queen Diamonds" => 10,"Queen Clubs" => 10,
-  "King Spades" => 10, "King Hearts" => 10, "King Diamonds" => 10,"King Clubs" => 10
-}
-
-# Is there any way to let all types of 2 points to value 2?
-singles = {
-  "2 Spades" => 2, "2 Hearts" => 2, "2 Diamonds" => 2, "2 Clubs" => 2, 
-  "3 Spades" => 3, "2 Hearts" => 3, "2 Diamonds" => 3, "2 Clubs" => 3, 
-  "4 Spades" => 4, "2 Hearts" => 4, "2 Diamonds" => 4, "2 Clubs" => 4, 
-  "5 Spades" => 5, "2 Hearts" => 5, "2 Diamonds" => 5, "2 Clubs" => 5, 
-  "6 Spades" => 6, "2 Hearts" => 6, "2 Diamonds" => 6, "2 Clubs" => 6, 
-  "7 Spades" => 7, "2 Hearts" => 7, "2 Diamonds" => 7, "2 Clubs" => 7, 
-  "8 Spades" => 8, "2 Hearts" => 8, "2 Diamonds" => 8, "2 Clubs" => 8, 
-  "9 Spades" => 9, "2 Hearts" => 9, "2 Diamonds" => 9, "2 Clubs" => 9
-}
-
-# aces represent 1 by default, in some conditions, aces will become 11.
-aces = {
-  "Ace Spades" => 1, "Ace Hearts" => 1,"Ace Diamonds" => 1,"Ace Clubs" => 1
-}
-
-cards_in_a_deck = {suits: suits, singles: singles, aces: aces}
-
-cards_in_players_hand = {}
-
-cards_in_dealers_hand = {}
-
-def initilize_game
-  cards_in_a_deck = {suits: suits, singles: singles, aces: aces}
+def calculate_total(cards)
+  card_values = cards.map{|e| e[1]} # get all values for the cards
+  total = 0
+  card_values.each do |value| 
+    if value == "A"
+      total += 11
+    elsif value.to_i == 0
+      total += 10
+    else
+      total += value.to_i
+    end
+  end
+# correct Aces
+card_values.select {|e| e == "A"}.count.times do
+  total -= 10 if total > 21
+  end
+  total
 end
 
+# Setup cards
+suits = ['Diamonds', "Spades", "Hearts", "Clubs"]
+cards = ['A','2','3','4','5','6','7','8','9','10','J', 'Q','K']
+deck = suits.product(cards).shuffle!
 
-def player_pick(cards_in_a_deck)
 
+cards_in_players_hand = []
+cards_in_dealers_hand = []
+
+player_total = 0
+dealer_total = 0
+
+# start the game
+cards_in_players_hand << deck.pop
+cards_in_dealers_hand << deck.pop
+cards_in_players_hand << deck.pop
+cards_in_dealers_hand << deck.pop
+
+# calculate total for dealer and player before going forward
+player_total = calculate_total(cards_in_players_hand)
+dealer_total = calculate_total(cards_in_dealers_hand)
+
+
+puts "Dealer's card => #{cards_in_dealers_hand}, with total of #{dealer_total}."
+puts "Player's card => #{cards_in_players_hand}, with total of #{player_total}."
+
+
+# player's turn
+if player_total == 21
+  puts "Congratulations, you got a blackjack, you won."
 end
 
-def dealer_pick
+while player_total < 21
+  puts "What do you want to do? 1) hit; 2) stay! "
+  hit_or_stay = gets.chomp
+  
+  # error handling 1 or 2
+  if !['1','2'].include?(hit_or_stay)
+    puts "Error, please enter 1 or 2!"
+    next
+  end
 
+  # stay
+  if hit_or_stay == "2"
+    puts "You choose to stay!"
+    break
+  end
+
+  # hit
+  new_card = deck.pop
+  puts "Dealing with player with #{new_card}"
+  cards_in_players_hand << new_card
+  player_total = calculate_total(cards_in_players_hand)
+  cards_in_players_hand.each do |card|
+    puts "=> #{card}"
+  end
+  puts "Player's total of #{player_total}."
+
+  if player_total == 21
+    puts "Congratulations, you just hit blackjack, you won!"
+    exit
+  elsif player_total > 21
+    puts "It looks like you just busted, you lose!"
+    exit
+  end
 end
 
-def winner_appears
-
+# dealer's turn
+if dealer_total == 21
+  puts "Sorry, the dealer just got a blackjack, you lose!"
+  exit
 end
 
-def bust
-
+while dealer_total < 17
+  new_card = deck.pop
+  puts "Dealing with dealer with #{new_card}"
+  cards_in_dealers_hand << new_card
+  dealer_total = calculate_total(cards_in_dealers_hand)
+  cards_in_dealers_hand.each do |card|
+    puts "=> #{card}"
+  end
+  puts "Dealer's total of #{dealer_total}."
+  if dealer_total == 21
+    puts "Dealer just got blackjack, you lose!"
+    exit
+  elsif dealer_total > 21
+    puts "Dealer just busted, you win!"
+    exit
+  end
 end
 
-begin
+# comparing hands
+puts "Player has:"
+cards_in_players_hand.each do |card|
+  puts "=> #{card}"
+end
+puts "Total of player's point is #{player_total}."
 
-end until winner_appears || bust
+puts "Dealer has:"
+cards_in_dealers_hand.each do |card|
+  puts "=> #{card}"
+end
+puts "Total of dealer's point is #{dealer_total}."
+
+if player_total > dealer_total
+  puts "Congratulations, you won!"
+elsif player_total < dealer_total
+  puts "Sorry, you lose!"
+else # handling dealer's total == player's total
+  new_card = deck.pop
+  puts "Dealing with dealer with #{new_card}"
+  cards_in_dealers_hand << new_card
+  dealer_total = calculate_total(cards_in_dealers_hand)
+  cards_in_dealers_hand.each do |card|
+    puts "=> #{card}"
+  end
+  puts "Dealer's total of #{dealer_total}."
+  if dealer_total == 21
+    puts "Dealer just got blackjack, you lose!"
+    exit
+  elsif dealer_total > 21
+    puts "Dealer just busted, you win!"
+    exit
+  end
+end
+
